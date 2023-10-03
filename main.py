@@ -5,18 +5,25 @@ import json
 import fpstimer
 from pygame import mixer
 
-
 X = 480
 Y = 360
-CX_FACTOR = 4  # compression factor for horizontal
-CY_FACTOR = 12  # compression factor for vertical
+
+# adjust these if needed depending on your terminal
+# compression factors, example: CX of 4: 10 20 30 40 --> 25
+CX_FACTOR = 4
+CY_FACTOR = 12
+area = CX_FACTOR * CY_FACTOR
+
 FRAMES = 6572  # 1-indexed
 ascii = "@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|(1{}]?-_+~>i!lI;:,\"^'."
-print(len(ascii))
+blocks = 256 // len(ascii)
+
 all_frames = []
 
 
 def precompute(frame: int):
+    """Converts a frame into ascii"""
+
     # converting image into matrix of pixels
     image = imread(f"frames/output_{str(frame).zfill(4)}.jpg")  # use zfill to fill left side with 0
     full = [[None] * X for _ in range(Y)]
@@ -35,12 +42,12 @@ def precompute(frame: int):
     # take average
     for i in range(len(compressed)):
         for j in range(len(compressed[0])):
-            compressed[i][j] //= (CX_FACTOR * CY_FACTOR)
+            compressed[i][j] //= area
 
     # determine whether a cell is black using threshold
     for i in range(len(compressed)):
         for j in range(len(compressed[0])):
-            compressed[i][j] = ascii[compressed[i][j] // (256 // len(ascii))]
+            compressed[i][j] = ascii[compressed[i][j] // blocks]
 
     seperator = "-" * (X // CX_FACTOR)
     all_frames.append(
