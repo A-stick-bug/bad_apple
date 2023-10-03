@@ -1,21 +1,22 @@
 # got frames from here: https://github.com/Felixoofed/badapple-frames
-# common factors for compression: 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24, 30, 40, 60, 120
 
 from matplotlib.image import imread
+import json
+import fpstimer
+from pygame import mixer
 
-# # OPTIONAL: writing to file in case it doesn't fit in terminal
-# import sys
-# sys.stdout = open('out.txt', 'w')
 
-THRESHOLD = 100  # RBG needed to count a value as black
 X = 480
 Y = 360
-CX_FACTOR = 6  # compression factor for horizontal
-CY_FACTOR = 18  # compression factor for vertical
+CX_FACTOR = 4  # compression factor for horizontal
+CY_FACTOR = 12  # compression factor for vertical
 FRAMES = 6572  # 1-indexed
+ascii = "@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|(1{}]?-_+~>i!lI;:,\"^'."
+print(len(ascii))
+all_frames = []
 
 
-def print_frame(frame: int):
+def precompute(frame: int):
     # converting image into matrix of pixels
     image = imread(f"frames/output_{str(frame).zfill(4)}.jpg")  # use zfill to fill left side with 0
     full = [[None] * X for _ in range(Y)]
@@ -39,15 +40,38 @@ def print_frame(frame: int):
     # determine whether a cell is black using threshold
     for i in range(len(compressed)):
         for j in range(len(compressed[0])):
-            compressed[i][j] = "&" if compressed[i][j] >= THRESHOLD else " "
+            compressed[i][j] = ascii[compressed[i][j] // (256 // len(ascii))]
 
-    print(frame)
-    print(*("".join(row) for row in compressed), sep="\n")  # prints the entire frame
-    print("-" * (X // CX_FACTOR))  # separator
+    seperator = "-" * (X // CX_FACTOR)
+    all_frames.append(
+        str(frame) + "\n" +
+        "\n".join("".join(row) for row in compressed) +
+        "\n" + seperator)  # the entire frame
 
 
-for i in range(2500, 4500, 2):
-    print_frame(i)
-#
-# for i in range(1, FRAMES + 1, 1):
-#     print_frame(i)
+if __name__ == '__main__':
+    # # precompute frames
+    # for i in range(1, FRAMES + 1):
+    #     print(f"GENERATING FRAME {i}")
+    #     precompute(i)
+    #     print(all_frames[-1])
+    # print("FINISHED GENERATING FRAMES")
+    #
+    # with open("frame_data.json", "w") as fd:
+    #     json.dump(all_frames, fd)
+    # print("SUCCESSFULLY SAVED FRAMES")
+
+    # use already existing frames
+    with open("frame_data_contrast.json", "r") as fd:
+        all_frames = json.load(fd)
+    start = input("Enter anything to begin: ")
+
+    # play music
+    mixer.init()
+    mixer.music.load("bad_apple.wav")
+    mixer.music.play()
+
+    timer = fpstimer.FPSTimer(30)
+    for f in all_frames:
+        print(f)
+        timer.sleep()
